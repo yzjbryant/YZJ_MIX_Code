@@ -1,0 +1,14 @@
+#include <stdio.h>
+int main(){
+    int N;
+
+    printf("enter: ");
+    scanf("%d",&N);
+    int sum=1;
+    int i;
+    for (i=2;i<=N;i++){
+        sum=sum+i;
+    }
+    printf("%d\n",sum);
+    return 0;
+}

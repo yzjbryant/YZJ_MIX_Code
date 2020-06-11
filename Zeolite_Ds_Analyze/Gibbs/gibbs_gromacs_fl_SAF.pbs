@@ -1,0 +1,75 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=6
+#PBS -N gromacs_yzj
+#PBS -o gromacs_jobs.out
+#PBS -j oe
+
+#
+# The number of processors you desire is indicated by replacing
+# <nproc> above.
+#
+
+#
+# GROMACS path and arguments to mdrun :
+#
+cd $PBS_O_WORKDIR
+
+if [ -d /program/gromacs/4.6.7-openmpi.gnu ]; then
+    GROMACS_PATH=/program/gromacs/4.6.7-openmpi.gnu
+    GROMPP_EXE=grompp_mpi
+    MDRUN_EXE=mdrun_mpi
+else 
+    GROMACS_PATH=/home/software/programs/gromacs
+    GROMPP_EXE=grompp
+    MDRUN_EXE=mdrun
+fi
+source $GROMACS_PATH/bin/GMXRC.bash
+OPENMPI_PATH=/program/mpi/openmpi/1.10.1-gnu
+MPIRUN=${OPENMPI_PATH}/bin/mpirun
+MPIEXEC=${OPENMPI_PATH}/bin/mpirun
+export PATH=${OPENMPI_PATH}/bin:$PATH
+export LD_LIBRARY_PATH=${OPENMPI_PATH}/lib:${LD_LIBRARY_PATH}
+
+echo "============The computed nodes============"
+cp    -f  $PBS_NODEFILE  NODE.txt
+echo  "User:               " $USER
+cat   $PBS_NODEFILE
+echo  "Job ID:             " $PBS_JOBID
+echo  "Job Cookie:         " $PBS_JOBCOOKIE
+echo  "Using executable:   " `which mpirun`
+echo "Using executable:   " `which ${GROMPP_EXE}`
+echo "Using executable:   " `which ${MDRUN_EXE}`
+echo  `date`
+echo "============Finished setting=============="
+TIME_DIR=$(date '+%Y-%m-%d_%H-%M-%S')
+TIME_DIR="${USER}_jobs_${TIME_DIR}_${PBS_JOBID}"
+if [ -d /utmp ]; then
+    TEMP_DIR=/utmp/${USER}/${TIME_DIR}
+else
+    TEMP_DIR=/temp/${USER}/${TIME_DIR}
+fi
+mkdir -p ${TEMP_DIR}
+cp -rf * ${TEMP_DIR}
+cd ${TEMP_DIR}
+rm -f gromacs_jobs.out
+echo "The temp direcotry: " ${TEMP_DIR}
+echo "============Finished setting=============="
+# =============== Don't Change Above Setting ===================== #
+
+echo "+++++++++++++ Run ++++++++++++++++++++++++++++"
+
+
+python Cut_box_vi_top_CH4_SAF.py
+
+echo "+++++++++++++ Finish  +++++++++++++++++++++++++"
+
+cd $PBS_O_WORKDIR
+cp -rf ${TEMP_DIR}/* .
+rm -rf ${TEMP_DIR}
+
+
+echo "All files were copied back!"
+echo "The work direcotry: " $PBS_O_WORKDIR
+echo `date`
+echo "============Finished Job =============="
+
